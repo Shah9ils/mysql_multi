@@ -1,0 +1,97 @@
+#!/bin/bash
+
+function shah9il_mysql_multi(){		
+
+		echo -n "Enter mysql folder Name:  "
+			read var_dir;
+
+		echo -n "Enter mysql port:  "
+			read var_port;
+				
+		var_cnf=$var_dir.cnf
+			
+		cd /usr/local
+		mkdir -p /usr/local/$var_dir && echo -e "Created $var_dir directory" || echo -e "Can't create $var_dir directory"
+		
+		chmod --reference /var/lib/mysql /usr/local/$var_dir && echo -e "Given permission to  $var_dir directory" || echo -e "Can't give permission to $var_dir directory"
+		chown --reference /var/lib/mysql /usr/local/$var_dir && echo -e "Given ownership to  $var_dir directory" || echo -e "Can't give ownership to $var_dir directory"
+
+		cp -p /etc/my.cnf /usr/local/$var_dir/$var_cnf && echo -e "$var_cnf file created" || echo -e "Can't create $var_cnf file"
+
+		cd /usr/local/$var_dir
+		>$var_cnf
+
+
+		echo -e "[mysqld] " > /usr/local/$var_dir/$var_cnf
+		echo -e "datadir=/usr/local/$var_dir/var " >> /usr/local/$var_dir/$var_cnf
+		echo -e "socket=/var/lib/mysql/$var_dir.sock " >> /usr/local/$var_dir/$var_cnf
+		echo -e "port=$var_port " >> /usr/local/$var_dir/$var_cnf
+		echo -e "user=mysql " >> /usr/local/$var_dir/$var_cnf
+		echo -e "log_bin " >> /usr/local/$var_dir/$var_cnf
+		echo -e "server-id=101 " >> /usr/local/$var_dir/$var_cnf
+		echo -e "max_connections=1000 " >> /usr/local/$var_dir/$var_cnf
+		echo -e "# Disabling symbolic-links is recommended to prevent assorted security risks " >> /usr/local/$var_dir/$var_cnf
+		echo -e "symbolic-links=0 " >> /usr/local/$var_dir/$var_cnf
+		echo -e " " >> /usr/local/$var_dir/$var_cnf
+		echo -e "[mysqld_safe] " >> /usr/local/$var_dir/$var_cnf
+		echo -e "log-error=/var/log/$var_dir.log " >> /usr/local/$var_dir/$var_cnf
+		echo -e "pid-file=/var/run/mysqld/$var_dir.pid " >> /usr/local/$var_dir/$var_cnf && echo -e "$var_cnf file is configured" || echo -e "Can't configure $var_cnf file"
+
+		#Service configuration option starts
+
+		touch d$var_dir
+
+		echo -e "#!/bin/sh" > d$var_dir
+		echo -e "## Startup script for $var_dir " >> d$var_dir
+		echo -e ". /etc/rc.d/init.d/functions " >> d$var_dir
+		echo -e "# " >> d$var_dir
+		echo -e 'case "$1" in ' >> d$var_dir
+		echo -e " start) " >> d$var_dir
+		echo -e "echo -n Starting $var_dir " >> d$var_dir
+		echo -e "       mysqld_safe --defaults-file=/usr/local/$var_dir/$var_cnf & " >> d$var_dir
+		echo -e ";; " >> d$var_dir
+		echo -e "stop) " >> d$var_dir
+		echo -e "echo -n  Stopping $var_dir " >> d$var_dir
+		echo -e "       mysqladmin -S /var/lib/mysql/$var_dir.sock shutdown " >> d$var_dir
+		echo -e ";; " >> d$var_dir
+		echo -e " restart) " >> d$var_dir
+		echo -e '$0 stop ' >> d$var_dir
+		echo -e '$0 start ' >> d$var_dir
+		echo -e ";; " >> d$var_dir
+		echo -e "*) " >> d$var_dir
+		echo -e 'echo "Usage: ./installer {start|stop|restart}" ' >> d$var_dir
+		echo -e "exit 1 " >> d$var_dir
+		echo -e "esac " >> d$var_dir
+		echo -e "exit 0 " >> d$var_dir
+
+		mv  d$var_dir  /etc/rc.d/init.d/$var_dir
+		chmod a+x  /etc/rc.d/init.d/$var_dir
+		ln -s ../init.d/$var_dir /etc/rc.d/rc3.d/S99$var_dir
+		ln -s ../init.d/$var_dir /etc/rc.d/rc5.d/S99$var_dir
+		ln -s ../init.d/$var_dir /etc/rc.d/rc0.d/K10$var_dir
+		ln -s ../init.d/$var_dir /etc/rc.d/rc6.d/K10$var_dir
+
+		
+        #connection file
+		mkdir /usr/local/$var_dir/bin
+		echo -e "#!/bin/bash" > /usr/local/$var_dir/bin/mysql
+		echo -e "uconn=('mysql -u root -h 127.0.0.1 -P $var_port')" >> /usr/local/$var_dir/bin/mysql
+		echo -e "" >> /usr/local/$var_dir/bin/mysql 
+		echo -e 'for f in "${uconn[@]}"' >> /usr/local/$var_dir/bin/mysql 
+		echo -e "do" >> /usr/local/$var_dir/bin/mysql 
+		echo -e '    exec ${f}' >> /usr/local/$var_dir/bin/mysql 
+		echo -e "echo 'show tables'" >> /usr/local/$var_dir/bin/mysql 
+		echo -e "done" >> /usr/local/$var_dir/bin/mysql 
+		echo -e "exit" >> /usr/local/$var_dir/bin/mysql && echo "Done"
+		chmod a+x /usr/local/$var_dir/bin/mysql		
+		
+		#Installation 
+		mysql_install_db --user=mysql --datadir=/usr/local/$var_dir/var
+
+		#Running the new instance
+		mysqld_safe --defaults-file=/usr/local/$var_dir/$var_cnf &
+
+}
+
+
+shah9il_mysql_multi;
