@@ -1,6 +1,6 @@
 # mysql_multi
 
-####Installation
+#### Installation
 
 * Just download the "mysql_multi" file in RHEL/CentOS based server.
 * Give executable permission to the downloaded file.
@@ -15,5 +15,5 @@
 * After running the file need to provide the expected folder name (i.e: MySQL_new)
 * By default the MySQL gets installed with 3306 port. But with this installer it will ask for a free port in server.
 
-####Prerequisite
+#### Prerequisite
 * MariaDB has not been tested with the script. Up to MySQL 5.6 has been tested with the script working fine. So to install additional MySQL instance a MySQL must be there in the server.
